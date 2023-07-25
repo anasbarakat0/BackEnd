@@ -152,6 +152,15 @@ function verifyToken(req, res, next) {
         });
     });
 }
+// show all restaurants
+router.get('/restaurants', async (req,res)=>{
+    try{
+        const restaurants=await Restaurant.find();
+        res.status(200).json(restaurants);
+    }catch (error){
+        res.status(500).json({message:error.message})
+    }
+});
 
 //filter
 router.get('/restaurants/filter', async (req, res) => {
@@ -352,8 +361,7 @@ router.delete('/api/restaurants/:restaurantId/menu/:menuId', async (req, res) =>
 });
 // profile restaurants
 router.get('/restaurants',authenticateTokenForRestaurant, async (req, res) => {
-    const restaurantRandomCode = user.randomCode;
-    
+    const restaurantRandomCode = req.user.randomCode; 
     try {
         const restaurant = await Restaurant.findOne({randomCode: restaurantRandomCode});
         res.send(restaurant);
@@ -363,13 +371,16 @@ router.get('/restaurants',authenticateTokenForRestaurant, async (req, res) => {
 });
 // update profile rest
 router.put('/restaurants' ,authenticateTokenForRestaurant, async (req,res) => {
-   const restaurantRandomCode = user.randomCode;
+   const restaurantRandomCode = req.user.randomCode;
     try{
-        const resturant = await Restaurant.find({
+        const resturant = await Restaurant.findOneAndUpdate({
             randomCode: restaurantRandomCode
         });        
         resturant.name = req.body.name;
         resturant.address = req.body.address;
+        resturant.phoneNumber = req.body.phoneNumber;
+        resturant.mobileNumber = req.body.mobileNumber;
+        resturant.numberoftables = req.body.numberoftables;
         await resturant.save();
         res.send(resturant);
     } catch(err){

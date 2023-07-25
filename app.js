@@ -132,10 +132,15 @@ app.post('/change-password', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 // profile user
 app.get('/api/users/:userId', async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
+    const user = await User.findById(req.params.userId,{
+      name: 1,
+      phone: 1,
+      address: 1
+    });
     res.send(user);
   } catch (err) {
     res.status(500).send(err);
@@ -143,9 +148,13 @@ app.get('/api/users/:userId', async (req, res) => {
   }
 });
 // update profile user
-app.put('/users/:userId' ,authenticateToken, async (req,res)=> {
+app.put('/users/:userId' , async (req,res)=> {
   try{
-    const user =await User.findByIdAndUpdate(req.params.userId,req.body,{new:true});
+    const user =await User.findByIdAndUpdate(req.params.userId,{
+      name: req.body.name,
+      phone: req.body.phone,
+      address: req.body.address
+    },{new:true});
     res.send(user);
   } catch (err){
     res.status(500).send(err);

@@ -3,7 +3,6 @@ const router = express.Router();
 const mongoose = require('mongoose');
 
 
-
 const Reservation = mongoose.model('Reservation', {
     restaurantId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -20,54 +19,53 @@ const Reservation = mongoose.model('Reservation', {
     reservationType: String
 });
 
-router.get('/api/restaurants/:restaurantId/tables/:tableId/reservations/:reservationId', (req, res) => {
-    Reservation.findById(req.params.reservationId, (err, reservation) => {
-        if (err) {
-            res.status(500).send(err);
-        } else {
-            res.send(reservation);
-        }
-    });
+// show reservation
+router.get('/api/restaurants/:restaurantId/tables/:tableId/reservations/:reservationId', async (req, res) => {
+    try {
+        const reservation = await Reservation.findById(req.params.reservationId);
+        res.json(reservation);
+    } catch (err) {
+        res.status(500).json(err);
+    }
 });
 
-router.post('/api/restaurants/:restaurantId/tables/:tableId/reservations', (req, res) => {
-    const reservation = new Reservation({
-        restaurantId: req.params.restaurantId,
-        tableId: req.params.tableId,
-        customerName: req.body.customerName,
-        customerNumber: req.body.customerNumber,
-        reservationDate: req.body.reservationDate,
-        numberOfPeople: req.body.numberOfPeople,
-        reservationType: req.body.reservationType
-    });
-    reservation.save((err, savedReservation) => {
-        if (err) {
-            res.status(500).send(err);
-        } else {
-            res.status(201).send(savedReservation);
-        }
-    });
+// add reservation
+router.post('/api/restaurants/:restaurantId/tables/:tableId/reservations', async (req, res) => {
+    try {
+        const reservation = new Reservation({
+            restaurantId: req.params.restaurantId,
+            tableId: req.params.tableId,
+            customerName: req.body.customerName,
+            customerNumber: req.body.customerNumber,
+            reservationDate: req.body.reservationDate,
+            numberOfPeople: req.body.numberOfPeople,
+            reservationType: req.body.reservationType
+        });
+        const savedReservation = await reservation.save();
+        res.status(201).json({ message:'تمت عملية الحجز بنجاح' ,savedReservation });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
 });
 
-router.put('/api/restaurants/:restaurantId/tables/:tableId/reservations/:reservationId', (req, res) => {
-    Reservation.findByIdAndUpdate(req.params.reservationId, req.body, { new: true }, (err, reservation) => {
-        if (err) {
-            res.status(500).send(err);
-        } else {
-            res.send(reservation);
-        }
-    });
+// update reservation
+router.put('/api/restaurants/:restaurantId/tables/:tableId/reservations/:reservationId', async (req, res) => {
+    try {
+        const reservation = await Reservation.findByIdAndUpdate(req.params.reservationId, req.body, { new: true });
+        res.json(reservation);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
 });
 
-
-router.delete('/api/restaurants/:restaurantId/tables/:tableId/reservations/:reservationId', (req, res) => {
-    Reservation.findByIdAndDelete(req.params.reservationId, (err, reservation) => {
-        if (err) {
-            res.status(500).send(err);
-        } else {
-            res.send(reservation);
-        }
-    });
+// delete reservation
+router.delete('/api/restaurants/:restaurantId/tables/:tableId/reservations/:reservationId', async (req, res) => {
+    try {
+        const reservation = await Reservation.findByIdAndDelete(req.params.reservationId);
+        res.json(reservation);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
 });
 
 module.exports = router;

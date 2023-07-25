@@ -2,99 +2,67 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 
-const Restaurantschema = new mongoose.Schema({
-    logoImage: String,
-    randomCode: Number,
-    name: String,
-    address: String,
-    phoneNumber: String,
-    mobileNumber: String,
-    restaurantImages: [String],
-    workingHours: String,
-    description: String,
-    categories:["category 1", "category 2"],
-    expirationDate: Date,
-    menu: [{
-        menuName: String,
-        food: [{
-            foodImage: String,
-            foodName: String,
-            foodDescription: String,
-            foodCategory: String,
-            foodPrice: Number
-        }]
-    }],
-    tables: [{
-        tableNumber: Number,
-        tableCapacity: Number,
-        isReserved: Boolean
-    }]
+const tableschema = new mongoose.Schema({
+    restaurantId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Restaurant'
+    },
+    tableNumber: Number,
+    tableCapacity: Number,
+    isReserved: Boolean
+});
+const Table = mongoose.model('Table', tableschema)
+
+
+router.post('/tables', async (req, res) => {
+    try {
+        const { restaurantId, tableNumber, tableCapacity, isReserved } = req.body;
+
+        const table = new Table({ restaurantId, tableNumber, tableCapacity, isReserved });
+        await table.save();
+        res.status(201).json(table);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
 });
 
- 
-
-
-router.post('/api/restaurants/:id/tables', (req, res) => {
-    Restaurant.findById(req.params.id, (err, restaurant) => {
-        if (err) {
-            res.status(500).send(err);
-        } else {
-            restaurant.tables.push(req.body);
-            restaurant.save((err, updatedRestaurant) => {
-                if (err) {
-                    res.status(500).send(err);
-                } else {
-                    res.send(updatedRestaurant);
-                }
-            });
+router.get('/tables/:id', async (req, res) => {
+    try {
+        const table = await Table.findById(req.params.id).populate({ path: 'restaurantId', options: { strictpopulate: false } });
+        if (!table) {
+            return res.status(404).json({ message: 'Table not found' });
         }
-    });
+        res.json(table);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
-router.put('/api/restaurants/:restaurantId/tables/:tableId', (req, res) => {
-    Restaurant.findById(req.params.restaurantId, (err, restaurant) => {
-        if (err) {
-            res.status(500).send(err);
-        } else {
-            const table = restaurant.tables.id(req.params.tableId);
-            table.set(req.body);
-            restaurant.save((err, updatedRestaurant) => {
-                if (err) {
-                    res.status(500).send(err);
-                } else {
-                    res.send(updatedRestaurant);
-                }
-            });
+router.put('/tables/:id', async (req, res) => {
+    try {
+        const { restaurantId, tableNumber, tableCapacity, isReserved } = req.body;
+        const table = await Table.findByIdAndUpdate(req.params.id, { restaurantId, tableNumber, tableCapacity, isReserved }, { new: true });
+        if (!table) {
+            return res.status(404).json({ error: 'table not found' });
         }
-    });
+        res.json(table);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
 });
 
-router.get('/api/restaurants/:restaurantId/tables/:tableId', (req, res) => {
-    Restaurant.findById(req.params.restaurantId, (err, restaurant) => {
-        if (err) {
-            res.status(500).send(err);
-        } else {
-            const table = restaurant.tables.id(req.params.tableId);
-            res.send(table);
+router.get('/tables/:id', async (req, res) => {
+    try {
+        const table = await Table.findById(req.params.id).populate({ path: 'restaurantId', options: { strictpopulate: false } });
+        if (!table) {
+            return res.status(404).json({ message: 'Table not found' });
         }
-    });
+        res.json(table);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
-router.delete('/api/restaurants/:restaurantId/tables/:tableId', (req, res) => {
-    Restaurant.findById(req.params.restaurantId, (err, restaurant) => {
-        if (err) {
-            res.status(500).send(err);
-        } else {
-            const table = restaurant.tables.id(req.params.tableId).remove();
-            restaurant.save((err, updatedRestaurant) => {
-                if (err) {
-                    res.status(500).send(err);
-                } else {
-                    res.send(updatedRestaurant);
-                }
-            });
-        }
-    });
-});
+
 
 module.exports = router;

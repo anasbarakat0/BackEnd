@@ -1,29 +1,28 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const Grid = require('gridfs-stream');
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 const restaurantsRouter = require('./routes/restaurants');
-const tablesRouter =require('./routes/tables');
+const tablesRouter = require('./routes/tables');
 const reservationsRouter = require('./routes/reservations');
+const path = require('path');
 
 const app = express();
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, './uploads')))
+// app.use('/uploads', express.static('uploads'));
 const connection = mongoose.connection;
 
 mongoose.connect('mongodb+srv://ghaithbirkdar:c4a@cluster0.jb1c741.mongodb.net/', { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => { 
+  .then(() => {
     console.log("mongodb connect success.");
     app.listen(3000)
-   })
-  .catch(err => { console.log(err) });
+  })
+  .catch(err => { console.log(err) 
+  });
 
-let gfs;
-connection.once('open', () => {
-  gfs = Grid(connection.db, mongoose.mongo);
-  gfs.collection('uploads');
-});
+
 
 const UserSchema = new mongoose.Schema({
   name: {
@@ -65,14 +64,14 @@ app.post('/login', async (req, res) => {
 
     const token = jwt.sign({ userId: user._id }, 'secret_key');
 
-    res.json({ token });
+    res.json({ token , id: user._id });
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
 app.post('/signup', async (req, res) => {
-  const { name, password, phone, address , email } = req.body;
+  const { name, password, phone, address, email } = req.body;
 
   try {
     const existingUser = await User.findOne({ phone });
@@ -83,8 +82,10 @@ app.post('/signup', async (req, res) => {
 
     const user = new User({ name, password, phone, address, email });
     await user.save();
+    const token = jwt.sign({ userId: user._id }, 'secret_key');
 
-    res.json({ message: 'User created successfully' });
+
+    res.json({ message: 'User created successfully', token , id: user._id  });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: 'Internal server error' });
@@ -131,16 +132,26 @@ app.post('/change-password', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+// profile user
+app.get('/api/users/:userId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    res.send(user);
+  } catch (err) {
+    res.status(500).send(err);
 
-app.get('/api/users/:userId', (req, res) => {
-  User.findById(req.params.userId, (err, user) => {
-    if (err) {
-      res.status(500).send(err);
-    } else {
-      res.send(user);
-    }
-  });
+  }
 });
+// update profile user
+app.put('/users/:userId' ,authenticateToken, async (req,res)=> {
+  try{
+    const user =await User.findByIdAndUpdate(req.params.userId,req.body,{new:true});
+    res.send(user);
+  } catch (err){
+    res.status(500).send(err);
+  }
+});
+
 
 
 //restaurants path
@@ -150,56 +161,24 @@ app.use(tablesRouter)
 //reservation path
 app.use(reservationsRouter)
 
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
 
-
-app.post('/api/uploads', upload.single('file'), (req, res) => {
-  const filePath = req.file.path;
-  const writeStream = gfs.createWriteStream({
-    filename: req.file.originalname
-  });
-  const readStream = fs.createReadStream(filePath);
-  readStream.pipe(writeStream);
-  readStream.on('end', () => {
-    fs.unlinkSync(filePath);
-    res.send('File uploaded successfully');
-  });
-});
-
-app.get('/restaurants/filter', async (req, res) => {
-  try {
-    let filters = {};
-
-    // تحديد المعايير للفلترة
-    if (req.query.city) {
-      filters.city = req.query.city;
-    }
-
-    if (req.query.categories) {
-      filters.categories = req.query.categories.split(',');
-    }
-
-    if (req.query.rating) {
-      filters.rating = { $gte: req.query.rating };
-    }
-
-    // تنفيذ الفلترة
-    const restaurants = await Restaurant.find(filters);
-    res.json(restaurants);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to filter restaurants' });
+  if (!token) {
+      return res.sendStatus(401);
   }
-});
+
+  jwt.verify(token, 'secretkey', (err, user) => {
+      if (err) {
+          return res.sendStatus(403);
+      }
+
+      req.user = user;
+      next();
+  });
+}
+
+
 
 app.listen(2000, () => console.log('Server started'));
-
-
-
-
-
-
-
-
-
-
-
-

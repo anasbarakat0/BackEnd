@@ -73,12 +73,13 @@ router.get('/reservations/:reservationId', async (req, res) => {
 router.post('/api/restaurants/:restaurantId/tables/:tableId/reservations', userAuth, async (req, res) => {
     try {
         const table = await Table.findById(req.params.tableId);
-        if (table.isReserved) {
+        const ccurrentdate = moment().startOf('day');
+        if (table.isReserved && moment(table.reservationDate).isSame(ccurrentdate,'day')) {
             return res.status(400).json({ message: 'الطاولة محجوزة بالفعل' });
         }
         const reservationDate = moment(req.body.reservationDate, 'MM-DD HH:mm').toDate();
         const minDate = moment().add(30, 'days');
-        if (!moment(reservationDate).isBefore(minDate)) {
+        if (!moment(reservationDate).isBetween(moment(), minDate)) {
             return res.status(400).json({ message: 'لا يمكن الحجز بعد 30 يوما من الان' });
         }
         const reservation = new Reservation({
@@ -100,14 +101,14 @@ router.post('/api/restaurants/:restaurantId/tables/:tableId/reservations', userA
         if (!restaurant) {
             return res.status(404).json({ message: 'المطعم غير موجود ' });
         }
-        const openTime = moment(restaurant.workingHours[dayofweek].open, 'HH:mm');
-        const closeTime = moment(restaurant.workingHours[dayofweek].close, 'HH:mm');
-        console.log(openTime ,closeTime);
-        if (!reservationTime.isBetween(openTime, closeTime)) {
+        const reservationtemp = moment(reservationTime.format('HH:mm'), 'HH:mm');
+        const openTime = moment(restaurant.workingHours.open, 'HH:mm');
+        const closeTime = moment(restaurant.workingHours.close, 'HH:mm');
+        if (!reservationtemp.isBetween(openTime, closeTime)) {
             return res.status(400).json({ message: 'حجز خارج ساعات العمل ' });
         }
         const savedReservation = await reservation.save();
-        const updatedtable = await Table.findByIdAndUpdate(req.params.tableId, { isReserved: true }, { new: true });
+        const updatedtable = await Table.findByIdAndUpdate(req.params.tableId, { isReserved: true , reservationDate:reservationDate }, { new: true });
         res.status(201).json({ message: 'تمت عملية الحجز بنجاح', savedReservation });
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -136,7 +137,7 @@ router.put('/api/restaurants/:restaurantId/tables/:tableId/reservations/:reserva
             return res.status(404).json({ message: 'الحجز غير موجود' });
         }
         const updatedtable = await Table.findByIdAndUpdate(req.params.tableId,{isReserved:false},{new:true});
-        
+
         res.json({ message: 'تم رفض الحجز بنجاح', reservation });
     } catch (error) {
         res.status(500).json({ error: 'حدث خطأ أثناء رفض الحجز' });

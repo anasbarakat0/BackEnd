@@ -29,13 +29,8 @@ const Restaurantschema = new mongoose.Schema({
     mobileNumber: String,
     Images: [String],
     workingHours: {
-        monday:{ open: String , close: String},
-        tuesday:{ open: String , close: String},
-        wednesday:{ open: String , close: String},
-        thursday:{ open: String , close: String},
-        friday:{ open: String , close: String},
-        saturday:{ open: String , close: String},
-        sunday:{ open: String , close: String}
+        open: String ,
+         close: String
     },
     description: String,
     categories: [String],
@@ -85,9 +80,11 @@ router.post('/upload', upload.array('images', 100), (req, res) => {
 
 // login restaurant
 router.post('/login/resturant', async (req, res) => {
-    const randomCode = generateRandomCode();
+   // const randomCode = generateRandomCode();
+   const{randomCode}= req.body;
     // التحقق من وجود المستخدم في قاعدة البيانات
     try {
+        console.log(randomCode);
         const resturant = await Restaurant.findOne({ randomCode });
 
         if (!resturant) {
@@ -96,8 +93,8 @@ router.post('/login/resturant', async (req, res) => {
         }
 
         // إنشاء التوكن باستخدام JWT
-        const token = jwt.sign({ randomCode: resturant.randomCode }, 'secretkey');
-        res.json({ token });
+        const token = jwt.sign({ randomCode: resturant.randomCode , restaurantId: resturant._id}, 'secretkey');
+        res.json({ token ,restaurantId: resturant._id });
 
     } catch (err) {
 
@@ -385,7 +382,7 @@ router.get('/restaurants',restauth, async (req, res) => {
 
 // update profile rest
 router.put('/restaurants' ,restauth, async (req,res) => {
-   const restaurantRandomCode = req.user.randomCode;
+   const restaurantRandomCode = req.Restaurant.randomCode;
     try{
         const resturant = await Restaurant.findOneAndUpdate({
             randomCode: restaurantRandomCode

@@ -161,8 +161,8 @@ function verifyToken(req, res, next) {
 // show all restaurants
 router.get('/restaurants', async (req,res)=>{
     try{
-        const restaurants=await Restaurant.find();
-        res.status(200).json(restaurants);
+        const restaurants=await Restaurant.find({} , {_id : 0});
+        res.status(200).json({'data':restaurants});
     }catch (error){
         res.status(500).json({message:error.message})
     }
@@ -371,8 +371,10 @@ router.delete('/api/restaurants/:restaurantId/menu/:menuId', async (req, res) =>
 
 // profile restaurants
 router.get('/restaurants',restauth, async (req, res) => {
-    const restaurantRandomCode = req.user.randomCode; 
+    const restaurantRandomCode = req.user.randomCode;
+    console.log(restaurantRandomCode); 
     try {
+        console.log(restaurantRandomCode);
         const restaurant = await Restaurant.findOne({randomCode: restaurantRandomCode});
         res.send(restaurant);
     } catch (err) {
@@ -382,7 +384,7 @@ router.get('/restaurants',restauth, async (req, res) => {
 
 // update profile rest
 router.put('/restaurants' ,restauth, async (req,res) => {
-   const restaurantRandomCode = req.Restaurant.randomCode;
+   const restaurantRandomCode = req.user.randomCode;
     try{
         const resturant = await Restaurant.findOneAndUpdate({
             randomCode: restaurantRandomCode

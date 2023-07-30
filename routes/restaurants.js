@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const multer = require('multer');
+const restauth = require('../middleware/restaurant.auth');
 const { error } = require('console');
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -27,7 +28,15 @@ const Restaurantschema = new mongoose.Schema({
     phoneNumber: String,
     mobileNumber: String,
     Images: [String],
-    workingHours: String,
+    workingHours: {
+        monday:{ open: String , close: String},
+        tuesday:{ open: String , close: String},
+        wednesday:{ open: String , close: String},
+        thursday:{ open: String , close: String},
+        friday:{ open: String , close: String},
+        saturday:{ open: String , close: String},
+        sunday:{ open: String , close: String}
+    },
     description: String,
     categories: [String],
     expirationDate: Date,
@@ -87,7 +96,7 @@ router.post('/login/resturant', async (req, res) => {
         }
 
         // إنشاء التوكن باستخدام JWT
-        const token = jwt.sign({ randomCode: resturant.randomCode }, 'secret_key');
+        const token = jwt.sign({ randomCode: resturant.randomCode }, 'secretkey');
         res.json({ token });
 
     } catch (err) {
@@ -109,8 +118,8 @@ router.post('/signup/resturant', async (req, res) => {
     try {
         // حفظ المستخدم في قاعدة البيانات
         await restaurant.save();
-        const token = jwt.sign({randomCode:restaurant.randomCode}, 'secret_key'); 
-        res.json({ message: 'User registered successfully', token });
+        const token = jwt.sign({randomCode:restaurant.randomCode}, 'secretkey'); 
+        res.json({ message: 'User registered successfully',randomCode , token });
         
     } catch (err) {
         console.log(err);
@@ -247,7 +256,7 @@ router.get('/api/restaurants/:id', async (req, res) => {
 });
 
 // delete rest
-router.delete('/api/restaurants',authenticateTokenForRestaurant,async (req, res) => {
+router.delete('/api/restaurants',restauth,async (req, res) => {
      const restaurantRandomCode = req.user.randomCode
  try{
      const restaurant = await Restaurant.findOneAndDelete({randomCode: restaurantRandomCode})
@@ -259,7 +268,7 @@ router.delete('/api/restaurants',authenticateTokenForRestaurant,async (req, res)
      });
 
 //update rest
-router.put('/restaurant',authenticateTokenForRestaurant, async (req, res) => {
+router.put('/restaurant',restauth, async (req, res) => {
     const restaurantRandomCode = req.user.randomCode;
     console.log(restaurantRandomCode);
 
@@ -326,6 +335,7 @@ router.post('/api/restaurants/:id/menu', async (req, res) => {
 
     }
 });
+
 // update menu
 router.put('/api/restaurants/:restaurantId/menu/:menuId', async (req, res) => {
     try{
@@ -338,6 +348,7 @@ router.put('/api/restaurants/:restaurantId/menu/:menuId', async (req, res) => {
         res.status(500).send(err);
     }
 });
+
 // show menu
 router.get('/api/restaurants/:restaurantId/menu/:menuId', async (req, res) => {
     try{
@@ -348,6 +359,7 @@ router.get('/api/restaurants/:restaurantId/menu/:menuId', async (req, res) => {
         res.status(500).send(err);
     }
 });
+
 // delete menu
 router.delete('/api/restaurants/:restaurantId/menu/:menuId', async (req, res) => {
     try{
@@ -359,8 +371,9 @@ router.delete('/api/restaurants/:restaurantId/menu/:menuId', async (req, res) =>
         res.status(500).send(err);
     }
 });
+
 // profile restaurants
-router.get('/restaurants',authenticateTokenForRestaurant, async (req, res) => {
+router.get('/restaurants',restauth, async (req, res) => {
     const restaurantRandomCode = req.user.randomCode; 
     try {
         const restaurant = await Restaurant.findOne({randomCode: restaurantRandomCode});
@@ -369,8 +382,9 @@ router.get('/restaurants',authenticateTokenForRestaurant, async (req, res) => {
         res.status(500).send(err);
     }
 });
+
 // update profile rest
-router.put('/restaurants' ,authenticateTokenForRestaurant, async (req,res) => {
+router.put('/restaurants' ,restauth, async (req,res) => {
    const restaurantRandomCode = req.user.randomCode;
     try{
         const resturant = await Restaurant.findOneAndUpdate({
@@ -388,7 +402,6 @@ router.put('/restaurants' ,authenticateTokenForRestaurant, async (req,res) => {
     }
 });
 
-
 // search 
 router.get('/restaurant/search', async (req, res) => {
     const { name } = req.query;
@@ -403,24 +416,5 @@ router.get('/restaurant/search', async (req, res) => {
 
 
 
-
-function authenticateTokenForRestaurant(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    //const ACCESS_TOKEN_SECRET = 'mysecretkey';
-    
-    if (!token) {
-        return res.sendStatus(401);
-    }
-
-    jwt.verify(token, 'secretkey', (err, user) => {
-        if (err) {
-            return res.sendStatus(403);
-        }
-
-        req.user = user;
-        next();
-    });
-}
-
-module.exports = router;
+module.exports.Restaurant = Restaurant;
+module.exports.restaurantsRouter = router;

@@ -3,9 +3,9 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
-const restaurantsRouter = require('./routes/restaurants');
-const tablesRouter = require('./routes/tables');
-const reservationsRouter = require('./routes/reservations');
+const {restaurantsRouter} = require('./routes/restaurants');
+const {tablesRouter} = require('./routes/tables');
+const reservationRouter = require('./routes/reservations');
 const path = require('path');
 
 const app = express();
@@ -21,9 +21,7 @@ mongoose.connect('mongodb+srv://ghaithbirkdar:c4a@cluster0.jb1c741.mongodb.net/'
   })
   .catch(err => { console.log(err) 
   });
-
-
-
+  
 const UserSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -62,7 +60,7 @@ app.post('/login', async (req, res) => {
     }
 
 
-    const token = jwt.sign({ userId: user._id }, 'secret_key');
+    const token = jwt.sign({ userId: user._id }, 'secretkey');
 
     res.json({ token , id: user._id });
   } catch (error) {
@@ -82,7 +80,7 @@ app.post('/signup', async (req, res) => {
 
     const user = new User({ name, password, phone, address, email });
     await user.save();
-    const token = jwt.sign({ userId: user._id }, 'secret_key');
+    const token = jwt.sign({ userId: user._id }, 'secretkey');
 
 
     res.json({ message: 'User created successfully', token , id: user._id  });
@@ -108,7 +106,7 @@ app.post('/forgot-password', async (req, res) => {
 
 
 
-    res.json({ message: 'Random code sent successfully' });
+    res.json({ message: 'Random code sent successfully', random:randomCode });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal server error' });
@@ -116,7 +114,7 @@ app.post('/forgot-password', async (req, res) => {
 });
 
 app.post('/change-password', async (req, res) => {
-  const { phone, randomCode, newPassword } = req.body;
+  const { phone, newPassword } = req.body;
 
   try {
 
@@ -168,26 +166,7 @@ app.use(restaurantsRouter)
 //table path
 app.use(tablesRouter)
 //reservation path
-app.use(reservationsRouter)
-
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-      return res.sendStatus(401);
-  }
-
-  jwt.verify(token, 'secretkey', (err, user) => {
-      if (err) {
-          return res.sendStatus(403);
-      }
-
-      req.user = user;
-      next();
-  });
-}
-
+app.use(reservationRouter)
 
 
 app.listen(2000, () => console.log('Server started'));

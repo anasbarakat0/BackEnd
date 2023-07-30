@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const restauth = require('../middleware/restaurant.auth');
 
 const tableschema = new mongoose.Schema({
     restaurantId: {
@@ -13,8 +14,18 @@ const tableschema = new mongoose.Schema({
 });
 const Table = mongoose.model('Table', tableschema)
 
+router.get('/tables/:restaurantsId',restauth, async(req,res)=> {
+    try{
+        const tables = await Table.find({
+            restaurantId: req.params.restaurantsId
+        });
+        res.status(200).json(tables);
+    }catch(error){
+        res.status(500).json({message: error.message});
+    }
+});
 
-router.post('/tables', async (req, res) => {
+router.post('/tables',restauth, async (req, res) => {
     try {
         const { restaurantId, tableNumber, tableCapacity, isReserved } = req.body;
 
@@ -63,6 +74,15 @@ router.get('/tables/:id', async (req, res) => {
     }
 });
 
+router.put('/restaurants/:restaurantId/tables/:tableId', async(req,res) =>{
+    try{
+        const updatedtable = await Table.findByIdAndUpdate(req.params.tableId,{ isReserved:true},{new: true});
+        res.status(200).json(updatedtable);
+    }catch(err){
+        res.status(500).json({message:err.message});
+    }
+});
+ 
 
-
-module.exports = router;
+module.exports.Table = Table;
+module.exports.tablesRouter = router;

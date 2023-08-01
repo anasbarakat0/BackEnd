@@ -158,10 +158,11 @@ function verifyToken(req, res, next) {
         });
     });
 }
+
 // show all restaurants
 router.get('/restaurants', async (req,res)=>{
     try{
-        const restaurants=await Restaurant.find({} , {_id : 0});
+        const restaurants=await Restaurant.find({});
         res.status(200).json({'data':restaurants});
     }catch (error){
         res.status(500).json({message:error.message})
@@ -195,52 +196,52 @@ router.get('/restaurants/filter', async (req, res) => {
 });
 
 //  add restaurant
-router.post('/restaurant', async (req, res) => {
-    const { name, address, phoneNumber, mobileNumber, workingHours, description, categories, menu, numberoftables } = req.body;
-    const { logo, Images } = req.body;
+// router.post('/restaurant', async (req, res) => {
+//     const { name, address, phoneNumber, mobileNumber, workingHours, description, categories, menu, numberoftables } = req.body;
+//     const { logo, Images } = req.body;
 
-    const updatedMenu = [];
-    if (menu) {
-        for (let i = 0; i < menu.length; i++) {
-            const item = menu[i];
-            const updatedFood = [];
-            if (item.food) {
-                for (let j = 0; j < item.food.length; j++) {
-                    const foodItem = item.food[j];
-                    const updatedFoodItem = {
-                        ...foodItem,
-                        foodImage: req.files[`menu.${i}.food.${j}.foodImage`] ? req.files[`menu.${i}.food.${j}.foodImage`][0] : null
-                    };
-                    updatedFood.push(updatedFoodItem);
-                }
-                const updatedItem = {
-                    ...item,
-                    food: updatedFood
-                };
-                updatedMenu.push(updatedItem);
-            }
-        }
-        try {
-            const restaurant = await Restaurant.create({
-                logo,
-                Images,
-                name,
-                address,
-                phoneNumber,
-                mobileNumber,
-                workingHours,
-                description,
-                categories,
-                menu: updatedMenu,
-                numberoftables
-            });
-            res.status(200).json({ message: 'تمت اضافة المطعم', restaurant });
-        } catch (error) {
-            console.error('حدث خطا في اضافة المطعم', error);
-            res.status(500).json({ message: 'حدث خطا في اضافة المطعم' });
-        }
-    }
-});
+//     const updatedMenu = [];
+//     if (menu) {
+//         for (let i = 0; i < menu.length; i++) {
+//             const item = menu[i];
+//             const updatedFood = [];
+//             if (item.food) {
+//                 for (let j = 0; j < item.food.length; j++) {
+//                     const foodItem = item.food[j];
+//                     const updatedFoodItem = {
+//                         ...foodItem,
+//                         foodImage: req.files[`menu.${i}.food.${j}.foodImage`] ? req.files[`menu.${i}.food.${j}.foodImage`][0] : null
+//                     };
+//                     updatedFood.push(updatedFoodItem);
+//                 }
+//                 const updatedItem = {
+//                     ...item,
+//                     food: updatedFood
+//                 };
+//                 updatedMenu.push(updatedItem);
+//             }
+//         }
+//         try {
+//             const restaurant = await Restaurant.create({
+//                 logo,
+//                 Images,
+//                 name,
+//                 address,
+//                 phoneNumber,
+//                 mobileNumber,
+//                 workingHours,
+//                 description,
+//                 categories,
+//                 menu: updatedMenu,
+//                 numberoftables
+//             });
+//             res.status(200).json({ message: 'تمت اضافة المطعم', restaurant });
+//         } catch (error) {
+//             console.error('حدث خطا في اضافة المطعم', error);
+//             res.status(500).json({ message: 'حدث خطا في اضافة المطعم' });
+//         }
+//     }
+// });
 
 // show restaurant
 router.get('/api/restaurants/:id', async (req, res) => {
@@ -370,11 +371,9 @@ router.delete('/api/restaurants/:restaurantId/menu/:menuId', async (req, res) =>
 });
 
 // profile restaurants
-router.get('/restaurants',restauth, async (req, res) => {
-    const restaurantRandomCode = req.user.randomCode;
-    console.log(restaurantRandomCode); 
+router.get('/restaurant',restauth, async (req, res) => {
+    const restaurantRandomCode = req.user.randomCode; 
     try {
-        console.log(restaurantRandomCode);
         const restaurant = await Restaurant.findOne({randomCode: restaurantRandomCode});
         res.send(restaurant);
     } catch (err) {

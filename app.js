@@ -7,6 +7,8 @@ const {restaurantsRouter} = require('./routes/restaurants');
 const {tablesRouter} = require('./routes/tables');
 const reservationRouter = require('./routes/reservations');
 const path = require('path');
+const { pick } = require('ladosh');
+const adminauth = require('./middleware/admin.auth');
 
 const app = express();
 app.use(express.json());
@@ -38,11 +40,34 @@ const UserSchema = new mongoose.Schema({
   address: {
     type: String,
     required: true
+  },
+  role:{
+    type : String,
+    enum : [ 'user' , 'admin' ],
+    default: 'user'
   }
 });
 
 const User = mongoose.model('User', UserSchema);
 
+
+const RequestSchema = new mongoose.Schema({
+  User:{
+    name:{
+      type : String,
+      required: true
+    },
+    phone:{
+      type: String,
+      required:true
+    }
+  },
+  randomCode:{
+    type: String,
+    required:true
+  }
+});
+const Request = mongoose.model('Request', RequestSchema);
 
 function generateRandomNumber() {
   return Math.floor(1000 + Math.random() * 9000);
@@ -101,10 +126,7 @@ app.post('/forgot-password', async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-
     const randomCode = generateRandomNumber();
-
-
 
     res.json({ message: 'Random code sent successfully', random:randomCode });
   } catch (err) {
@@ -130,6 +152,18 @@ app.post('/change-password', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+app.get('/request/:id' , adminauth, async(req,res)=> {
+  try{
+    const requests = await Request.find({});
+    res.status(200).json(requests);
+  }catch(err){
+    res.status(500).json({message:'internal server error'});
+  }
+}); 
+
+
+
 
 // profile user
 app.get('/api/users/:userId', async (req, res) => {
@@ -158,6 +192,9 @@ app.put('/users/:userId' , async (req,res)=> {
     res.status(500).send(err);
   }
 });
+
+
+
 
 
 

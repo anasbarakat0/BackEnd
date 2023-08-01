@@ -7,7 +7,6 @@ const {restaurantsRouter} = require('./routes/restaurants');
 const {tablesRouter} = require('./routes/tables');
 const reservationRouter = require('./routes/reservations');
 const path = require('path');
-const { pick } = require('ladosh');
 const adminauth = require('./middleware/admin.auth');
 
 const app = express();

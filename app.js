@@ -93,7 +93,7 @@ app.post('/login', async (req, res) => {
 });
 
 app.post('/signup', async (req, res) => {
-  const { name, password, phone, address, email } = req.body;
+  const { name, password, phone, address, role ,email } = req.body;
 
   try {
     const existingUser = await User.findOne({ phone });
@@ -102,7 +102,7 @@ app.post('/signup', async (req, res) => {
       return res.status(409).json({ message: 'User already exists' });
     }
 
-    const user = new User({ name, password, phone, address, email });
+    const user = new User({ name, password, phone, address, role, email });
     await user.save();
     const token = jwt.sign({ userId: user._id }, 'secretkey');
 
@@ -160,9 +160,6 @@ app.get('/request/:id' , adminauth, async(req,res)=> {
     res.status(500).json({message:'internal server error'});
   }
 }); 
-
-
-
 
 // profile user
 app.get('/api/users/:userId', async (req, res) => {

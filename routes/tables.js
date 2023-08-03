@@ -14,7 +14,8 @@ const tableschema = new mongoose.Schema({
 });
 const Table = mongoose.model('Table', tableschema)
 
-router.get('/tables/:restaurantsId',restauth, async(req,res)=> {
+// show all tables of restaurant
+router.get('/tables/:restaurantsId', async(req,res)=> {
     try{
         const tables = await Table.find({
             restaurantId: req.params.restaurantsId
@@ -24,7 +25,7 @@ router.get('/tables/:restaurantsId',restauth, async(req,res)=> {
         res.status(500).json({message: error.message});
     }
 });
-
+// add table
 router.post('/tables',restauth, async (req, res) => {
     try {
         const { restaurantId, tableNumber, tableCapacity, isReserved } = req.body;
@@ -36,7 +37,7 @@ router.post('/tables',restauth, async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 });
-
+// show tables
 router.get('/tables/:id', async (req, res) => {
     try {
         const table = await Table.findById(req.params.id).populate({ path: 'restaurantId', options: { strictpopulate: false } });
@@ -48,7 +49,7 @@ router.get('/tables/:id', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
+// update table
 router.put('/tables/:id', async (req, res) => {
     try {
         const { restaurantId, tableNumber, tableCapacity, isReserved } = req.body;
@@ -61,7 +62,7 @@ router.put('/tables/:id', async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 });
-
+// show table
 router.get('/tables/:id', async (req, res) => {
     try {
         const table = await Table.findById(req.params.id).populate({ path: 'restaurantId', options: { strictpopulate: false } });
@@ -73,7 +74,7 @@ router.get('/tables/:id', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
+// update status about table
 router.put('/restaurants/:restaurantId/tables/:tableId', async(req,res) =>{
     try{
         const updatedtable = await Table.findByIdAndUpdate(req.params.tableId,{ isReserved:true},{new: true});

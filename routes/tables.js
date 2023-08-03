@@ -83,7 +83,26 @@ router.put('/restaurants/:restaurantId/tables/:tableId', async(req,res) =>{
         res.status(500).json({message:err.message});
     }
 });
+// return idtable
+router.get('/restaurant/:restaurantId/tables/:number',async (req,res) => {
+    const tableNumber = parseInt(req.params.number);
+    const table = await findTableByNumber(tableNumber);
+    if(table){
+        res.status(200).json({ id: table._id});
+    } else{
+        res.status(404).json({message:'table not found'});
+    }
+});
  
+async function findTableByNumber(number){
+    try{
+        const table = await Table.findOne({ tableNumber: number});
+        return table;
+    }catch(error){
+        console.error(error);
+        return null;
+    }
+}
 
 module.exports.Table = Table;
 module.exports.tablesRouter = router;

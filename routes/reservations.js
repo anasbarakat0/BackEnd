@@ -10,6 +10,10 @@ const restauth = require('../middleware/restaurant.auth');
 
 
 const Reservation = mongoose.model('Reservation', {
+    userId:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref:'User'
+    },
     restaurantId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Restaurant'
@@ -49,11 +53,10 @@ router.get('/bookings/:restaurantsId', restauth, async (req, res) => {
 });
 
 //show all reservations user
-router.get('/Bookings/:userId', userAuth, async (req, res) => {
-    const userId = req.params.userId;
+router.get('/reservations', userAuth, async (req, res) => {
     try {
-        const bookings = await Reservation.find({ userId });
-        res.status(200).json(bookings);
+        const reservations = await Reservation.find({ userId: req.user.id });
+        res.status(200).json(reservations);
     } catch (error) {
         res.status(500).json({ error: 'حدث خطأ اثناء جلب الحجوزات' });
     }
@@ -70,7 +73,7 @@ router.get('/reservations/:reservationId', async (req, res) => {
 });
 
 // add reservation
-router.post('/api/restaurants/:restaurantId/tables/:tableId/reservations', userAuth, async (req, res) => {
+router.post('/api/restaurants/:restaurantId/tables/:tableId/reservations',userAuth, async (req, res) => {
     try {
         const table = await Table.findById(req.params.tableId);
         const ccurrentdate = moment().startOf('day');
@@ -83,6 +86,7 @@ router.post('/api/restaurants/:restaurantId/tables/:tableId/reservations', userA
             return res.status(400).json({ message: 'لا يمكن الحجز بعد 30 يوما من الان' });
         }
         const reservation = new Reservation({
+            userId:req.user.id,
             restaurantId: req.params.restaurantId,
             tableId: req.params.tableId,
             customerName: req.body.customerName,

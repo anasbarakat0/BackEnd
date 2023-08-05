@@ -38,9 +38,9 @@ router.post('/tables',restauth, async (req, res) => {
     }
 });
 // show tables
-router.get('/tables/:id', async (req, res) => {
+router.get('/table/:id', async (req, res) => {
     try {
-        const table = await Table.findById(req.params.id).populate({ path: 'restaurantId', options: { strictpopulate: false } });
+        const table = await Table.findById(req.params.id);//.populate({ path: 'restaurantId', options: { strictpopulate: false } });
         if (!table) {
             return res.status(404).json({ message: 'Table not found' });
         }
@@ -60,18 +60,6 @@ router.put('/tables/:id', async (req, res) => {
         res.json(table);
     } catch (error) {
         res.status(400).json({ error: error.message });
-    }
-});
-// show table
-router.get('/tables/:id', async (req, res) => {
-    try {
-        const table = await Table.findById(req.params.id).populate({ path: 'restaurantId', options: { strictpopulate: false } });
-        if (!table) {
-            return res.status(404).json({ message: 'Table not found' });
-        }
-        res.json(table);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
     }
 });
 // update status about table

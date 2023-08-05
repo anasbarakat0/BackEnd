@@ -152,17 +152,16 @@ router.put('/api/restaurants/:restaurantId/tables/:tableId/reservations/:reserva
 router.put('/reservations/:reservationId', async (req, res) => {
     try {
         const reservation = await Reservation.findByIdAndUpdate(req.params.reservationId, req.body, { new: true });
-        res.json(reservation);
+        res.status(200).json({message:'تم تعديل الحجز'});
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
-
 // delete reservation
 router.delete('/reservations/:reservationId', async (req, res) => {
     try {
         const reservation = await Reservation.findByIdAndDelete(req.params.reservationId);
-        res.json(reservation);
+        res.status(200).json({reservation, message:'reservation has been deleted'});
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
